@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<footer style="position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.95rem; color: #333; background: rgba(255,255,255,0.18); padding: 6px 18px; border-radius: 12px; z-index: 30; box-shadow: 0 1px 6px 0 rgba(0,0,0,0.06);">
+    &copy; 2025 Random Gradient Generator - tym-msmsmsm - v1.0
+</footer>
+<script>
+    // Add randomize button to color pickers
+    function randomizeColors() {
+        const count = parseInt(document.getElementById('colorCount').value, 10);
+        for (let i = 1; i <= count; i++) {
+            const hue = Math.floor(Math.random() * 360);
+            const sat = 60 + Math.random() * 20;
+            const light = 65 + Math.random() * 15;
+            const hex = hslToHex(hue, sat, light);
+            document.getElementById('color' + i).value = hex;
+        }
+        setCustomGradient();
+    }
+
+    // Add the button after DOM is ready
+    window.addEventListener('DOMContentLoaded', function() {
+        const colorPickers = document.getElementById('colorPickers');
+        const btn = document.createElement('button');
+        btn.textContent = 'Randomize Colors';
+        btn.type = 'button';
+        btn.className = 'button';
+        btn.style.marginLeft = '12px';
+        btn.style.padding = '4px 12px';
+        btn.style.fontSize = '0.92rem';
+        btn.onclick = randomizeColors;
+        colorPickers.parentNode.appendChild(btn);
+    });
+</script>
+<style>
+    /* Make the main box a bit shorter */
+    div[style*="position: absolute"] {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+</style>
+<script>
+    // Override setRandomGradient to use color pickers
+    function setRandomGradient() {
+        const count = parseInt(document.getElementById('colorCount').value, 10);
+        const angle = Math.floor(Math.random() * 360);
+        let colors = [];
+        for (let i = 1; i <= count; i++) {
+            colors.push(document.getElementById('color' + i).value);
+        }
+        document.body.style.background = `linear-gradient(${angle}deg, ${colors.join(', ')})`;
+        // Store current gradient for saving
+        window.currentGradient = {
+            angle,
+            colors: [...colors]
+        };
+    }
+</script>
+<div style="position: absolute; top: 24px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.18); border-radius: 18px; padding: 18px 24px; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08); z-index: 10; display: flex; flex-direction: column; align-items: center;">
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;"></div>
+        <div style="display: flex; align-items: center; margin-bottom: 18px;">
+            <label style="font-weight: 500; margin-right: 10px;">Number of Colors:</label>
+            <select id="colorCount" onchange="updateColorPickers()" style="font-size: 1rem; border-radius: 8px; border: 1px solid #ccc; padding: 4px 8px;">
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+            <span id="colorPickers" style="margin-left: 16px;">
+                <input type="color" id="color1">
+                <input type="color" id="color2">
+            </span>
+        </div>
+    </div>
+</div>
+<!-- Save Gradient and Generate Gradient buttons side by side at the bottom of the page -->
+<div style="position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 20; display: flex; gap: 16px;">
+    <button class="button" onclick="saveGradient()">Save Gradient</button>
+    <button class="button" onclick="setRandomGradient()">Generate Gradient</button>
+    <script>
+        function saveGradient() {
+            if (!window.currentGradient) return;
+            const { angle, colors } = window.currentGradient;
+            // Create a canvas
+            const canvas = document.createElement('canvas');
+            const width = 1200, height = 800;
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            // Create gradient
+            const radians = angle * Math.PI / 180;
+            const x0 = width / 2 - Math.cos(radians) * width / 2;
+            const y0 = height / 2 - Math.sin(radians) * height / 2;
+            const x1 = width / 2 + Math.cos(radians) * width / 2;
+            const y1 = height / 2 + Math.sin(radians) * height / 2;
+            const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+            const step = 1 / (colors.length - 1);
+            colors.forEach((color, i) => {
+                grad.addColorStop(i * step, color);
+            });
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, width, height);
+            // Download as image
+            const link = document.createElement('a');
+            link.download = 'gradient.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</div>
+<script>
+    // Helper to convert HSL to HEX for color input default values
+    function hslToHex(h, s, l) {
+        l /= 100;
+        s /= 100;
+        let c = (1 - Math.abs(2 * l - 1)) * s;
+        let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        let m = l - c/2;
+        let r=0, g=0, b=0;
+        if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+        else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+        else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+        else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+        else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+        else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function updateColorPickers() {
+        const count = parseInt(document.getElementById('colorCount').value, 10);
+        const container = document.getElementById('colorPickers');
+        container.innerHTML = '';
+        for (let i = 1; i <= count; i++) {
+            // Generate pastel HSL for default
+            const hue = Math.floor(Math.random() * 360);
+            const sat = 60 + Math.random() * 20;
+            const light = 65 + Math.random() * 15;
+            const hex = hslToHex(hue, sat, light);
+            const input = document.createElement('input');
+            input.type = 'color';
+            input.id = 'color' + i;
+            input.value = hex;
+            input.addEventListener('input', setCustomGradient);
+            container.appendChild(input);
+        }
+        setCustomGradient();
+    }
+
+    function setCustomGradient() {
+        const count = parseInt(document.getElementById('colorCount').value, 10);
+        const angle = Math.floor(Math.random() * 360);
+        let colors = [];
+        for (let i = 1; i <= count; i++) {
+            colors.push(document.getElementById('color' + i).value);
+        }
+        document.body.style.background = `linear-gradient(${angle}deg, ${colors.join(', ')})`;
+        // Store current gradient for saving
+        window.currentGradient = {
+            angle,
+            colors: [...colors]
+        };
+    }
+
+    // Initialize pickers on load
+    window.addEventListener('DOMContentLoaded', updateColorPickers);
+</script>
+<head>
+    <meta charset="UTF-8">
+    <title>Random Apple-style Gradient Generator</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            transition: background 0.5s;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        .button {
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 24px;
+            background: #222;
+            color: #fff;
+            cursor: pointer;
+            margin-bottom: 32px;
+            transition: background 0.2s;
+            align-self: flex-end;
+        }
+        .button:hover {
+            background: #444;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        function randomColor() {
+            // Apple-like pastel color palette
+            const hue = Math.floor(Math.random() * 360);
+            const sat = 60 + Math.random() * 20; // 60-80%
+            const light = 65 + Math.random() * 15; // 65-80%
+            return `hsl(${hue}, ${sat}%, ${light}%)`;
+        }
+        setRandomGradient();
+    </script>
+    <style>
+        .button {
+            align-self: center;
+            background: rgba(255, 255, 255, 0.15);
+            color: #222;
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10), 0 1.5px 4px 0 rgba(255,255,255,0.15) inset;
+            backdrop-filter: blur(8px) saturate(180%);
+            -webkit-backdrop-filter: blur(8px) saturate(180%);
+            border: 1.5px solid rgba(255,255,255,0.35);
+            transition: background 0.2s, color 0.2s;
+        }
+        .button:hover {
+            background: rgba(255,255,255,0.25);
+            color: #111;
+        }
+    </style>
+</body>
+</html>
